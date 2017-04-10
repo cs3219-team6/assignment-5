@@ -16,18 +16,16 @@ def process_repo_link(repo_link):
     #returns owner, repo_name
     return re.compile(REGEX_REPO_LINK_DELIMITER).split(repo_link)
 
-def get_top_contributor(repo_link):
-    return get_top_n_contributors(repo_link, 1)
-
-def get_top_n_contributors(repo_link, n):
+def _get_contributors_from_api(repo_link):
     owner, repo = process_repo_link(repo_link)
-
     # connect to github API
     gh = github.GitHub()
-    contributors = gh.repos(owner)(repo).contributors.get() 
-
+    return gh.repos(owner)(repo).contributors.get() 
+    
+def get_top_n_contributors(repo_link, n):
     answer = ''
     persons = 0
+    contributors = _get_contributors_from_api(repo_link)
     for contributor in contributors:
         answer += '%5d %s\n' % (contributor['contributions'], contributor['login'])
         persons += 1
@@ -37,4 +35,17 @@ def get_top_n_contributors(repo_link, n):
             break
 
     answer += '\nTop contributors for %s!' % repo_link
+    return answer
+
+def _get_commits_from_api(repo_link):
+    owner, repo = process_repo_link(repo_link)
+    # GET /repos/:owner/:repo/commits
+    gh = github.GitHub()
+    return gh.repos(owner)(repo).commits.get() 
+    
+def get_latest_commit_summary(repo_link):
+    latest_commit = _get_commits_from_api(repo_link)[0]
+    answer = 'Latest commit for %s\n' % repo_link
+    answer += '\n%s\n' % latest_commit['commit']['message']
+    answer += 'by %s on %s\n' % (latest_commit['committer']['login'], latest_commit['commit']['committer']['date'])
     return answer
