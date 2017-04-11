@@ -11,6 +11,15 @@ repo_link is in the format USER/REPO_NAME or ORGANIZATION/REPO_NAME
 """
 
 REGEX_REPO_LINK_DELIMITER = '\s*/\s*'
+GITHUB = github.GitHub()
+
+def is_repo_link_valid(repo_link):
+    owner, repo = process_repo_link(repo_link)
+    try:
+        GITHUB.repos(owner)(repo).get()
+    except github.ApiNotFoundError:
+        return False
+    return True
 
 def process_repo_link(repo_link):
     #returns owner, repo_name
@@ -19,8 +28,7 @@ def process_repo_link(repo_link):
 def _get_contributors_from_api(repo_link):
     owner, repo = process_repo_link(repo_link)
     # connect to github API
-    gh = github.GitHub()
-    return gh.repos(owner)(repo).contributors.get() 
+    return GITHUB.repos(owner)(repo).contributors.get() 
     
 def get_top_n_contributors(repo_link, n):
     answer = ''
@@ -40,8 +48,8 @@ def get_top_n_contributors(repo_link, n):
 def _get_commits_from_api(repo_link):
     owner, repo = process_repo_link(repo_link)
     # GET /repos/:owner/:repo/commits
-    gh = github.GitHub()
-    return gh.repos(owner)(repo).commits.get() 
+    GITHUB = github.GitHub()
+    return GITHUB.repos(owner)(repo).commits.get() 
     
 def get_latest_commit_summary(repo_link):
     latest_commit = _get_commits_from_api(repo_link)[0]
