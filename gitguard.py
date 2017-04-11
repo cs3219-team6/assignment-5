@@ -108,6 +108,8 @@ def get_latest_commit_summary(repo_link, username=None, password=None):
 
     Args:
         repo_link (str) : the repository link in the format owner/repo_name
+        username (str): github username
+        password (str): github password
 
     Returns:
         dict: ['user'] --> {'name', 'email', 'username'}, ['message'], ['timestamp']
@@ -124,3 +126,20 @@ def get_latest_commit_summary(repo_link, username=None, password=None):
     latest_commit_dict['message'] = latest_commit['commit']['message']
     latest_commit_dict['timestamp'] = latest_commit['commit']['committer']['date']
     return latest_commit_dict
+
+
+def get_latest_top_contributor(repo_link, since, username=None, password=None):
+    """
+    Return top contributor of recent period.
+
+    Args:
+        repo_link (str) : the repository link in the format owner/repo_name
+        since (datetime.date) : datetime object of starting observation time
+        username (str): github username
+        password (str): github password
+
+    Returns:
+        dict: {'username': <username>, 'name': <name'}
+    """
+    #TODO(Darren): implement this
+    return {'username': 'username', 'name': 'name'}
