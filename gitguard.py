@@ -21,7 +21,7 @@ def is_repo_link_valid(repo_link):
         repo_link (str): the repository link in the format owner/repo_name
 
     Returns:
-        bool: True if repository exists (valid owner and repo_name), False otherwise
+        bool: True if repository exists (valid owner and repo_name) AND repository is public, False otherwise
     """
     owner, repo = process_repo_link(repo_link)
     try:
