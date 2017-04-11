@@ -19,7 +19,7 @@ def parse_datetime(input):
         return None
 
 def start(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
+    bot.sendMessage(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!\nYou can use /top_three /top_contributor and /last_commit")
 
 start_handler = CommandHandler('start', start)
 dispatcher.add_handler(start_handler)
