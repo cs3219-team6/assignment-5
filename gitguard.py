@@ -48,7 +48,7 @@ def is_user_valid(username, password):
         bool: True if user credentials is valid. False if otherwise
     """
 
-    gh = github(username=username, password=password)
+    gh = github.GitHub(username=username, password=password)
     try:
         gh.users('githubpy').followers.get()
         return True
