@@ -98,4 +98,27 @@ def top_contributor(bot, update, args):
 top_contributor_handler = CommandHandler('top_contributor', top_contributor, pass_args=True)
 dispatcher.add_handler(top_contributor_handler)
 
+def last_commit(bot, update, args):
+    if len(args) != 1 and len(args) != 3:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Wrong format. Format must follow `/last_commit <repo_link> [<username> <password]`", parse_mode='Markdown')
+        return
+
+    if not gitguard.is_repo_link_valid(args[0]):
+        bot.sendMessage(chat_id=update.message.chat_id, text="Wrong or invalid github repo. Repo format must follow `<username>/<repo_name>`", parse_mode='Markdown')
+        return
+
+    if len(args) == 3 and not gitguard.is_user_valid(args[1], args[2]):
+        bot.sendMessage(chat_id=update.message.chat_id, text="Wrong github credentials.")
+        return
+
+    if len(args) == 1:
+        res = gitguard.get_latest_commit_summary(args[0])
+    else:
+        res = gitguard.get_latest_commit_summary(args[0], args[1], args[2])
+
+    bot.sendMessage(chat_id=update.message.chat_id, text=str(res))
+
+last_commit_handler = CommandHandler('last_commit', last_commit, pass_args=True)
+dispatcher.add_handler(last_commit_handler)
+
 updater.start_polling()
