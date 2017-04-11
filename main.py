@@ -24,14 +24,6 @@ def start(bot, update):
 start_handler = CommandHandler('start', start)
 dispatcher.add_handler(start_handler)
 
-
-def git(bot, update, args):
-    print(args)
-    bot.sendMessage(chat_id=update.message.chat_id, text="Under Construction")
-
-git_handler = CommandHandler('git', git, pass_args=True)
-dispatcher.add_handler(git_handler)
-
 def top_three(bot, update, args):
     if len(args) != 1 and len(args) != 3:
         bot.sendMessage(chat_id=update.message.chat_id, text="Wrong format. Format must follow `/top_three <repo_link> [<username> <password]`", parse_mode='Markdown')
