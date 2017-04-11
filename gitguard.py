@@ -11,6 +11,7 @@ repo_link is in the format USER/REPO_NAME or ORGANIZATION/REPO_NAME
 """
 
 REGEX_REPO_LINK_DELIMITER = '\s*/\s*'
+REPO_LINK_REGEX = re.compile(REGEX_REPO_LINK_DELIMITER)
 GITHUB = github.GitHub()
 
 def is_repo_link_valid(repo_link):
@@ -23,23 +24,48 @@ def is_repo_link_valid(repo_link):
     Returns:
         bool: True if repository exists (valid owner and repo_name) AND repository is public, False otherwise
     """
-    owner, repo = process_repo_link(repo_link)
+
+    owner = repo = ''
+    try:
+        owner, repo = process_repo_link(repo_link)
+    except ValueError:
+        return False
+
     try:
         GITHUB.repos(owner)(repo).get()
+        return True
     except github.ApiNotFoundError:
         return False
-    return True
+
+def is_user_valid(username, password):
+    """
+    User credentials validator.
+
+    Args:
+        username (str): github username
+        password (str): github password
+
+    Returns:
+        bool: True if user credentials is valid. False if otherwise
+    """
+
+    gh = github(username=username, password=password)
+    try:
+        gh.users('githubpy').followers.get()
+        return True
+    except github.ApiError:
+        return False
 
 def process_repo_link(repo_link):
     #returns owner, repo_name
-    return re.compile(REGEX_REPO_LINK_DELIMITER).split(repo_link)
+    return REPO_LINK_REGEX.split(repo_link)
 
-def _get_contributors_from_api(repo_link):
+def _get_contributors_from_api(repo_link, gh):
     owner, repo = process_repo_link(repo_link)
     # connect to github API
-    return GITHUB.repos(owner)(repo).contributors.get() 
-    
-def get_top_n_contributors(repo_link, n):
+    return gh.repos(owner)(repo).contributors.get()
+
+def get_top_n_contributors(repo_link, n, username = None, password = None):
     """
     Extracts top contributors for a given repository.
 
@@ -55,7 +81,8 @@ def get_top_n_contributors(repo_link, n):
     assert n > 0
 
     persons = 0
-    contributors = _get_contributors_from_api(repo_link)
+    gh = github.GitHub(username=username, password=password) if username and password else GITHUB
+    contributors = _get_contributors_from_api(repo_link, gh)
 
     contributions = []
     for contributor in contributors:
@@ -71,12 +98,12 @@ def get_top_n_contributors(repo_link, n):
 
     return contributions
 
-def _get_commits_from_api(repo_link):
+def _get_commits_from_api(repo_link, gh):
     owner, repo = process_repo_link(repo_link)
     # GET /repos/:owner/:repo/commits
-    return GITHUB.repos(owner)(repo).commits.get() 
-    
-def get_latest_commit_summary(repo_link):
+    return gh.repos(owner)(repo).commits.get()
+
+def get_latest_commit_summary(repo_link, username=None, password=None):
     """
     Extracts latest commit info for a given repository.
 
@@ -86,7 +113,9 @@ def get_latest_commit_summary(repo_link):
     Returns:
         dict: ['user'] --> {'name', 'email', 'username'}, ['message'], ['timestamp']
     """
-    latest_commit = _get_commits_from_api(repo_link)[0]
+
+    gh = github.GitHub(username=username, password=password) if username and password else GITHUB
+    latest_commit = _get_commits_from_api(repo_link, gh)[0]
     latest_commit_dict = {}
     latest_commit_dict['user'] = {}
 
