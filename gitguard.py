@@ -55,6 +55,24 @@ def is_user_valid(username, password):
     except github.ApiError:
         return False
 
+def _get_user(username):
+    return GITHUB.users(username).get()
+
+def get_name_from_username(username):
+    """
+    Retrieves a user's profile name from their username
+
+    Args:
+        username (str): github username
+
+    Returns:
+        str: the user's name, None if no such username found
+    """
+    try:
+        return _get_user(username)['name']
+    except github.ApiNotFoundError:
+        return None
+
 def process_repo_link(repo_link):
     #returns owner, repo_name
     return REPO_LINK_REGEX.split(repo_link)
@@ -128,18 +146,28 @@ def get_latest_commit_summary(repo_link, username=None, password=None):
     return latest_commit_dict
 
 
-def get_latest_top_contributor(repo_link, since, username=None, password=None):
+def _get_contributor_stats(repo_link, gh):
+    owner, repo = process_repo_link(repo_link)
+    return gh.repos(owner)(repo).stats.contributors.get()
+    
+def get_top_contributor_in_past_week(repo_link, username=None, password=None):
     """
-    Return top contributor of recent period.
+    Return top contributor of within the last week
 
     Args:
         repo_link (str) : the repository link in the format owner/repo_name
-        since (datetime.date) : datetime object of starting observation time
         username (str): github username
         password (str): github password
 
     Returns:
-        dict: {'username': <username>, 'name': <name'}
+        dict:   {   'username': <username>,
+                    'name': <name>,
+                    'commits': <commits>
+                    'additions': <additions>
+                    'deletions': <deletions>
+                }
     """
-    #TODO(Darren): implement this
-    return {'username': 'username', 'name': 'name'}
+    gh = github.GitHub(username=username, password=password) if username and password else GITHUB
+    top = _get_contributor_stats(repo_link, gh)[0]
+
+    return {'username': top['author']['login'], 'name': get_name_from_username(top['author']['login']), 'commits': top['weeks'][0]['c'], 'additions': top['weeks'][0]['a'], 'deletions': top['weeks'][0]['d']}
