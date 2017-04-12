@@ -143,3 +143,28 @@ def get_latest_top_contributor(repo_link, since, username=None, password=None):
     """
     #TODO(Darren): implement this
     return {'username': 'username', 'name': 'name'}
+
+def get_total_insertions_deletions(repo_link, username=None, password=None):
+    """
+    Return the total number of insertions and deletions
+    API: GET /repos/:owner/:repo/stats/code_frequency
+
+    Args:
+        repo_link (str) : the repository link in the format owner/repo_name
+        username (str): github username
+        password (str): github password
+
+    Returns:
+        dict: {'username': <username>, 'name': <name'}
+    """
+    owner, repo = process_repo_link(repo_link)
+    gh = github.GitHub(username=username, password=password) if username and password else GITHUB
+    weekly_data = gh.repos(owner)(repo).stats.code_frequency.get();
+
+    adds = 0
+    dels = 0
+    for week in weekly_data:
+        adds += week[1]
+        dels += week[2]
+    return adds, dels * -1
+
