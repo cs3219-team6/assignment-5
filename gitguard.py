@@ -2,7 +2,7 @@ import re
 import github
 import datetime
 import git
-import subprocess
+import re
 
 """
 gitguard_extractor.py
@@ -252,19 +252,32 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, path=N
         history.append(commit)
     return history
 
-def clone_repo(repo_link, file_name):
+def get_total_lines_by_author_name(repo_link, author_name):
     from git import Repo
     repo_url = "%s%s%s" % ("https://github.com/", repo_link, ".git");
-    default_dest = "%s%s%s" % ("C:/", repo_link, author_name)
+    default_dest = "%s%s" % ("C:/", repo_link)
     repo = Repo.clone_from(repo_url , default_dest, branch="master")
-    log = repo.blame('-porcelain', file = file_name)
-    print log
-    
+    log = repo.git.log(author= author_name, pretty = "tformat:", numstat = True)
+    for line in log.splitlines():
+        print(line)    
+
+def get_stats_by_author(repo_link, author_name, username=None, password=None):
+    owner, repo = process_repo_link(repo_link)
+    gh = github.GitHub(username=username, password=password) if username and password else GITHUB
+    all_data = gh.repos(owner)(repo).stats.contributors.get(author = author_name)[0];
+    total_commits = all_data['total']
+    weekly_data = all_data['weeks']
+    adds = 0
+    dels = 0
+    for week in weekly_data:
+        adds += week['a']
+        dels += week['d']
+    return total_commits, adds, dels
 
 """
 import os
 os.chdir("C:\Users\Darren Le\Documents\cs3219-assignment-5")
 execfile("gitguard.py")
 from gitguard import *
-clone_repo("cs3219-team6/assignment-5", "gitguard.py")
+get_stats_by_author("cs3219-team6/assignment-5", "darrenwee")
 """
