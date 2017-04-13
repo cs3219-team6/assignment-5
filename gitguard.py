@@ -270,13 +270,20 @@ def _clone_repo(repo_link, destination=None):
     return repo
 
 
-def get_commit_history_for_file(repo_link, file_path, start_line=None, end_line=None):
+def get_commit_history_for_file(repo_link, file_path, author_name=None, start_line=None, end_line=None):
     repo = _clone_repo(repo_link)
     if start_line and end_line: 
         lines_limit = "%s,%s" % (start_line, end_line)
-        log = repo.git.log(L= lines_limit, pretty = "%H\t%an\t%s", file= file_path)
+        if not author_name:
+            log = repo.git.log(L= lines_limit, pretty = "%H\t%an\t%s", file= file_path)
+        else:
+            log = repo.git.log(L= lines_limit, pretty = "%H\t%an\t%s", author = author_name, file= file_path)
     else:
-        log = repo.git.log('--pretty="%H\t%an\t%s"', file_path)
+        if author_name:
+            author_param = "--author=%s" % (author_name)
+            log = repo.git.log('--pretty="%H\t%an\t%s"', author_param, file_path)
+        else:
+            log = repo.git.log('--pretty="%H\t%an\t%s"', file_path)
     log_split = log.splitlines()
     history = []
     for line in log_split:
