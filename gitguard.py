@@ -2,6 +2,7 @@ import re
 import github
 import datetime
 import git
+import subprocess
 
 """
 gitguard_extractor.py
@@ -251,9 +252,19 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, path=N
         history.append(commit)
     return history
 
-def clone_repo(repo_link):
+def clone_repo(repo_link, file_name):
     from git import Repo
     repo_url = "%s%s%s" % ("https://github.com/", repo_link, ".git");
-    default_dest = "%s%s" % ("C:/", repo_link)
+    default_dest = "%s%s%s" % ("C:/", repo_link, author_name)
     repo = Repo.clone_from(repo_url , default_dest, branch="master")
-    return repo.git.log(shortstat = True, oneline = True)
+    log = repo.blame('-porcelain', file = file_name)
+    print log
+    
+
+"""
+import os
+os.chdir("C:\Users\Darren Le\Documents\cs3219-assignment-5")
+execfile("gitguard.py")
+from gitguard import *
+clone_repo("cs3219-team6/assignment-5", "gitguard.py")
+"""
