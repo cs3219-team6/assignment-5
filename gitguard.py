@@ -191,7 +191,7 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, userna
     if start:
         start_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (start.year, start.month, start.day, "00", "00", "00")
     else:
-        start_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (now.year, "01", "01", "00", "00", "00")
+        start_date_formatted = "%s-%s-%sT%s:%s:%sZ" % ("2007", "01", "01", "00", "00", "00")
 
     if end:
         end_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (end.year, end.month, end.day, "23", "59", "59")
@@ -200,7 +200,7 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, userna
 
     owner, repo = process_repo_link(repo_link)
     gh = github.GitHub(username=username, password=password) if username and password else GITHUB
-    commit_history = gh.repos(owner)(repo).commits.get(author = author_name, since = start, until = end ) if username else gh.repos(owner)(repo).commits.get(since = start, until = end ) 
+    commit_history = gh.repos(owner)(repo).commits.get(author = author_name, since = start_date_formatted, until = end_date_formatted ) if username else gh.repos(owner)(repo).commits.get(since = start_date_formatted, until = end_date_formatted ) 
 
     n = len(commit_history)
     history = [[0 for x in range(2)] for y in range(n)] 
