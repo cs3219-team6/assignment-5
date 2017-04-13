@@ -1,5 +1,6 @@
 import re
 import github
+import datetime
 
 """
 gitguard_extractor.py
@@ -168,3 +169,42 @@ def get_total_insertions_deletions(repo_link, username=None, password=None):
         dels += week[2]
     return adds, dels * -1
 
+def get_commit_history(repo_link, author_name=None, start=None, end=None, username=None, password=None):
+    """
+    Return the commit history of a specific author over a period of time
+    API: https://api.github.com/repos/:owner/:repo/commits?author?since?until
+
+    Args:
+        repo_link (str) : the repository link in the format owner/repo_name
+        author_name (str): author's GitHub username
+        start (str): datetiem.date object to be converted to YYYY-MM-DDTHH:MM:SSZ
+        end (str): datetime.date object to be converted to YYYY-MM-DDTHH:MM:SSZ
+        username (str): github username
+        password (str): github password
+
+    Returns:
+        dict: {'username': <username>, 'name': <name'}
+    """
+    
+
+    now = datetime.datetime.now()
+    if start:
+        start_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (start.year, start.month, start.day, "00", "00", "00")
+    else:
+        start_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (now.year, "01", "01", "00", "00", "00")
+
+    if end:
+        end_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (end.year, end.month, end.day, "23", "59", "59")
+    else:
+        end_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (now.year, now.month, now.day, "23", "59", "59")
+
+    owner, repo = process_repo_link(repo_link)
+    gh = github.GitHub(username=username, password=password) if username and password else GITHUB
+    commit_history = gh.repos(owner)(repo).commits.get(author = author_name, since = start, until = end ) if username else gh.repos(owner)(repo).commits.get(since = start, until = end ) 
+
+    n = len(commit_history)
+    history = [[0 for x in range(2)] for y in range(n)] 
+    for i in range(n):
+        history[i][0] = commit_history[i]["sha"]
+        history[i][1] = commit_history[i]["commit"]["message"]
+    return history
