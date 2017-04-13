@@ -203,18 +203,20 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, path=N
 
     owner, repo = process_repo_link(repo_link)
     gh = github.GitHub(username=username, password=password) if username and password else GITHUB
-    if (author_name and path):
+    if author_name and path:
         commit_history = gh.repos(owner)(repo).commits.get(author = author_name, since = start_date_formatted, until = end_date_formatted, path = path ) 
-    elif (!author_name and path): 
-        gh.repos(owner)(repo).commits.get(since = start_date_formatted, until = end_date_formatted, path = path)
-    elif (author_name and !path):
-        gh.repos(owner)(repo).commits.get(author = author_name, since = start_date_formatted, until = end_date_formatted)
+    elif not author_name and path: 
+        commit_history = gh.repos(owner)(repo).commits.get(since = start_date_formatted, until = end_date_formatted, path = path)
+    elif author_name and not path:
+        commit_history = gh.repos(owner)(repo).commits.get(author = author_name, since = start_date_formatted, until = end_date_formatted)
     else:
-        gh.repos(owner)(repo).commits.get(since = start_date_formatted, until = end_date_formatted)
+        commit_history = gh.repos(owner)(repo).commits.get(since = start_date_formatted, until = end_date_formatted)
 
     n = len(commit_history)
-    history = [[0 for x in range(2)] for y in range(n)] 
+    history = [] 
     for i in range(n):
-        history[i][0] = commit_history[i]["sha"]
-        history[i][1] = commit_history[i]["commit"]["message"]
+        commit = {}
+        commit['sha'] = commit_history[i]["sha"]
+        commit['commit_message'] = commit_history[i]["commit"]["message"]
+        history.append(commit)
     return history
