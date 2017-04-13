@@ -1,6 +1,7 @@
 import re
 import github
 import datetime
+import git
 
 """
 gitguard_extractor.py
@@ -249,3 +250,10 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, path=N
         commit['commit_message'] = commit_history[i]["commit"]["message"]
         history.append(commit)
     return history
+
+def clone_repo(repo_link):
+    from git import Repo
+    repo_url = "%s%s%s" % ("https://github.com/", repo_link, ".git");
+    default_dest = "%s%s" % ("C:/", repo_link)
+    repo = Repo.clone_from(repo_url , default_dest, branch="master")
+    return repo.git.log(shortstat = True, oneline = True)
