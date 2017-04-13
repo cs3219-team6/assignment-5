@@ -256,10 +256,24 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, path=N
     return history
 
 def _remove_readonly(func, path, excinfo):
+    """
+    Helper function to remove change read-only file status to editable
+    Source: http://stackoverflow.com/questions/1889597/deleting-directory-in-python
+    """
     os.chmod(path, stat.S_IWRITE)
     func(path)
 
 def _clone_repo(repo_link, destination=None):
+    """
+    Helper function to clone a repo to destination. If folder already exists, delete all version
+    
+    Args:
+        repo_link:      owner/repo format
+        destination:    local file path, set to default if not supplied
+
+    Return:
+        reference to the cloned repo
+    """
     if not destination:
         destination = "%s%s%s" % ("C:/", repo_link, "-gitguard")
     if os.path.exists(destination):
@@ -271,6 +285,19 @@ def _clone_repo(repo_link, destination=None):
 
 
 def get_commit_history_for_file(repo_link, file_path, author_name=None, start_line=None, end_line=None):
+    """
+    Return commit history for a file. Options: by author, specify code chunk
+    
+    Args:
+        repo_link:      owner/repo format
+        file_path:      path to file in repo
+        author_name:    (optional) limit history to one author
+        start_line:     (optional) specify the starting line in the file
+        end_line:       (optional) specigy the ending line in the file to inspect
+
+    Return:
+        list of commits in format [sha, author, title]
+    """
     repo = _clone_repo(repo_link)
     if start_line and end_line: 
         lines_limit = "%s,%s" % (start_line, end_line)
@@ -297,6 +324,18 @@ def get_commit_history_for_file(repo_link, file_path, author_name=None, start_li
         print(elements) 
 
 def get_stats_by_author(repo_link, author_name, username=None, password=None):
+    """
+    Return total number of commits, lines added and lines delted by an author
+    
+    Args:
+        repo_link:      owner/repo format
+        author_name:    limit history to one author
+        username (str)          : github username
+        password (str)          : github password
+
+    Return:
+        three numbers: commits, additions, deletions
+    """
     owner, repo = process_repo_link(repo_link)
     gh = github.GitHub(username=username, password=password) if username and password else GITHUB
     all_data = gh.repos(owner)(repo).stats.contributors.get(author = author_name)[0];
@@ -308,11 +347,3 @@ def get_stats_by_author(repo_link, author_name, username=None, password=None):
         adds += week['a']
         dels += week['d']
     return total_commits, adds, dels
-
-"""
-import os
-os.chdir("C:\Users\Darren Le\Documents\cs3219-assignment-5")
-execfile("gitguard.py")
-from gitguard import *
-get_commit_history_for_file("cs3219-team6/assignment-5", "gitguard.py")
-"""
