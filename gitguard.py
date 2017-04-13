@@ -1,5 +1,6 @@
 import re
 import github
+import datetime
 
 """
 gitguard_extractor.py
@@ -171,3 +172,80 @@ def get_top_contributor_in_past_week(repo_link, username=None, password=None):
     top = _get_contributor_stats(repo_link, gh)[0]
 
     return {'username': top['author']['login'], 'name': get_name_from_username(top['author']['login']), 'commits': top['weeks'][0]['c'], 'additions': top['weeks'][0]['a'], 'deletions': top['weeks'][0]['d']}
+
+def get_total_insertions_deletions(repo_link, username=None, password=None):
+    """
+    Return the total number of insertions and deletions
+    API: GET /repos/:owner/:repo/stats/code_frequency
+
+    Args:
+        repo_link (str) : the repository link in the format owner/repo_name
+        username (str): github username
+        password (str): github password
+
+    Returns:
+        insertions, deletions
+    """
+    owner, repo = process_repo_link(repo_link)
+    gh = github.GitHub(username=username, password=password) if username and password else GITHUB
+    weekly_data = gh.repos(owner)(repo).stats.code_frequency.get();
+
+    adds = 0
+    dels = 0
+    for week in weekly_data:
+        adds += week[1]
+        dels += week[2]
+    return adds, dels * -1
+
+def get_commit_history(repo_link, author_name=None, start=None, end=None, path=None, username=None, password=None):
+    """
+    Return the commit history of a specific author over a period of time
+    API: https://api.github.com/repos/:owner/:repo/commits?author?since?until
+
+    Args:
+        repo_link (str)         : the repository link in the format owner/repo_name
+        author_name (str)       : author's GitHub username
+        start (datetime.date)   : datetiem.date object to be converted to YYYY-MM-DDTHH:MM:SSZ
+                                  if not value provided set to 10 years ago
+        end (datetime.date)     : datetime.date object to be converted to YYYY-MM-DDTHH:MM:SSZ
+                                  if no value provided set to current time
+        path (str)              : filepath. if none provided then set to whole repository
+        username (str)          : github username
+        password (str)          : github password
+
+    Returns:
+        list:   commits in chronological order in specified range
+                each element is a dict containing ['sha'] and ['commit_message']
+    """
+    now = datetime.datetime.now()
+
+    if start:
+        start_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (start.year, start.month, start.day, "00", "00", "00")
+    else:
+        start_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (now.year - 10, "01", "01", "00", "00", "00")
+
+    if end:
+        end_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (end.year, end.month, end.day, "23", "59", "59")
+    else:
+        end_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (now.year, now.month, now.day, "23", "59", "59")
+
+
+    owner, repo = process_repo_link(repo_link)
+    gh = github.GitHub(username=username, password=password) if username and password else GITHUB
+    if author_name and path:
+        commit_history = gh.repos(owner)(repo).commits.get(author = author_name, since = start_date_formatted, until = end_date_formatted, path = path ) 
+    elif not author_name and path: 
+        commit_history = gh.repos(owner)(repo).commits.get(since = start_date_formatted, until = end_date_formatted, path = path)
+    elif author_name and not path:
+        commit_history = gh.repos(owner)(repo).commits.get(author = author_name, since = start_date_formatted, until = end_date_formatted)
+    else:
+        commit_history = gh.repos(owner)(repo).commits.get(since = start_date_formatted, until = end_date_formatted)
+
+    n = len(commit_history)
+    history = [] 
+    for i in range(n):
+        commit = {}
+        commit['sha'] = commit_history[i]["sha"]
+        commit['commit_message'] = commit_history[i]["commit"]["message"]
+        history.append(commit)
+    return history
