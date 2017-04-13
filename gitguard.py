@@ -3,6 +3,9 @@ import github
 import datetime
 import git
 import re
+import os
+import shutil
+import stat
 
 """
 gitguard_extractor.py
@@ -252,11 +255,23 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, path=N
         history.append(commit)
     return history
 
-def get_total_lines_by_author_name(repo_link, author_name):
-    from git import Repo
+def _remove_readonly(func, path, excinfo):
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+def _clone_repo(repo_link, destination=None):
+    if not destination:
+        destination = "%s%s%s" % ("C:/", repo_link, "-gitguard")
+    if os.path.exists(destination):
+        shutil.rmtree(destination, onerror=_remove_readonly)
     repo_url = "%s%s%s" % ("https://github.com/", repo_link, ".git");
-    default_dest = "%s%s" % ("C:/", repo_link)
-    repo = Repo.clone_from(repo_url , default_dest, branch="master")
+    from git import Repo
+    repo = Repo.clone_from(repo_url , destination, branch="master")
+    return repo
+
+
+def get_total_lines_by_author_name(repo_link, author_name):
+    repo = _clone_repo(repo_link)
     log = repo.git.log(author= author_name, pretty = "tformat:", numstat = True)
     for line in log.splitlines():
         print(line)    
@@ -279,5 +294,5 @@ import os
 os.chdir("C:\Users\Darren Le\Documents\cs3219-assignment-5")
 execfile("gitguard.py")
 from gitguard import *
-get_stats_by_author("cs3219-team6/assignment-5", "darrenwee")
+get_total_lines_by_author_name("cs3219-team6/assignment-5", "darrenwee")
 """
