@@ -270,11 +270,24 @@ def _clone_repo(repo_link, destination=None):
     return repo
 
 
-def get_total_lines_by_author_name(repo_link, author_name):
+def get_commit_history_for_file(repo_link, file_path, start_line=None, end_line=None):
     repo = _clone_repo(repo_link)
-    log = repo.git.log(author= author_name, pretty = "tformat:", numstat = True)
-    for line in log.splitlines():
-        print(line)    
+    if start_line and end_line: 
+        lines_limit = "%s,%s" % (start_line, end_line)
+        log = repo.git.log(L= lines_limit, pretty = "%H\t%an\t%s", file= file_path)
+    else:
+        log = repo.git.log('--pretty="%H\t%an\t%s"', file_path)
+    log_split = log.splitlines()
+    history = []
+    for line in log_split:
+        line = line.strip()
+        elements = re.split(r'\t+', line)
+        commit = {}
+        commit['sha'] = elements[0]
+        commit['author'] = elements[1]
+        commit['commit_message'] = elements[2]
+        history.append(commit)
+        print(elements) 
 
 def get_stats_by_author(repo_link, author_name, username=None, password=None):
     owner, repo = process_repo_link(repo_link)
@@ -294,5 +307,5 @@ import os
 os.chdir("C:\Users\Darren Le\Documents\cs3219-assignment-5")
 execfile("gitguard.py")
 from gitguard import *
-get_total_lines_by_author_name("cs3219-team6/assignment-5", "darrenwee")
+get_commit_history_for_file("cs3219-team6/assignment-5", "gitguard.py")
 """
