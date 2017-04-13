@@ -169,26 +169,25 @@ def get_total_insertions_deletions(repo_link, username=None, password=None):
         dels += week[2]
     return adds, dels * -1
 
-def get_commit_history(repo_link, author_name=None, start=None, end=None, username=None, password=None):
+def get_commit_history(repo_link, author_name=None, start=None, end=None, path=None, username=None, password=None):
     """
     Return the commit history of a specific author over a period of time
     API: https://api.github.com/repos/:owner/:repo/commits?author?since?until
 
     Args:
-        repo_link (str)     : the repository link in the format owner/repo_name
-        author_name (str)   : author's GitHub username
-        start (str)         : datetiem.date object to be converted to YYYY-MM-DDTHH:MM:SSZ
-                              if not value provided set to 10 years ago
-        end (str)           : datetime.date object to be converted to YYYY-MM-DDTHH:MM:SSZ
-                              if no value provided set to current time
-        username (str)      : github username
-        password (str)      : github password
+        repo_link (str)         : the repository link in the format owner/repo_name
+        author_name (str)       : author's GitHub username
+        start (datetime.date)   : datetiem.date object to be converted to YYYY-MM-DDTHH:MM:SSZ
+                                  if not value provided set to 10 years ago
+        end (datetime.date)     : datetime.date object to be converted to YYYY-MM-DDTHH:MM:SSZ
+                                  if no value provided set to current time
+        path (str)              : filepath. if none provided then set to whole repository
+        username (str)          : github username
+        password (str)          : github password
 
     Returns:
         history[#commits][i]: commit SHA (i =0) and commit message (i=1)
     """
-    
-
     now = datetime.datetime.now()
 
     if start:
@@ -201,9 +200,17 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, userna
     else:
         end_date_formatted = "%s-%s-%sT%s:%s:%sZ" % (now.year, now.month, now.day, "23", "59", "59")
 
+
     owner, repo = process_repo_link(repo_link)
     gh = github.GitHub(username=username, password=password) if username and password else GITHUB
-    commit_history = gh.repos(owner)(repo).commits.get(author = author_name, since = start_date_formatted, until = end_date_formatted ) if username else gh.repos(owner)(repo).commits.get(since = start_date_formatted, until = end_date_formatted ) 
+    if (author_name and path):
+        commit_history = gh.repos(owner)(repo).commits.get(author = author_name, since = start_date_formatted, until = end_date_formatted, path = path ) 
+    elif (!author_name and path): 
+        gh.repos(owner)(repo).commits.get(since = start_date_formatted, until = end_date_formatted, path = path)
+    elif (author_name and !path):
+        gh.repos(owner)(repo).commits.get(author = author_name, since = start_date_formatted, until = end_date_formatted)
+    else:
+        gh.repos(owner)(repo).commits.get(since = start_date_formatted, until = end_date_formatted)
 
     n = len(commit_history)
     history = [[0 for x in range(2)] for y in range(n)] 
