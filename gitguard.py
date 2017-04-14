@@ -285,16 +285,14 @@ def _clone_repo(repo_link, destination=None):
     return repo
 
 
-def get_commit_history_for_file(repo_link, file_path, author_name=None, start_line=None, end_line=None):
+def get_commit_history_for_file(repo_link, file_path, author_name=None):
     """
-    Return commit history for a file. Options: by author, specify code chunk
+    Return commit history for a file. Options: by author.
     
     Args:
         repo_link:      owner/repo format
         file_path:      path to file in repo
         author_name:    (optional) limit history to one author
-        start_line:     (optional) specify the starting line in the file
-        end_line:       (optional) specigy the ending line in the file to inspect
 
     Return:
         list of commits in format [sha, author, title] if author's name no given
@@ -302,20 +300,11 @@ def get_commit_history_for_file(repo_link, file_path, author_name=None, start_li
         list of commits in format [sha, title] if author's name is given
     """
     repo = _clone_repo(repo_link)
-
-    lines_limit = ""
-    if not start_line:
-        start_line = 1
-    if not end_line:
-        lines_limit = "%s" % (file_path)
-    else:
-        lines_limit = "-L %s,%s:%s" % (start_line, end_line, file_path)
-    """ temporaroly disallow line limiters lines_limit = "%s" % (file_path)"""
     if not author_name:
-        log = repo.git.log("--pretty=format:'%H\t%an\t%s'", lines_limit)
+        log = repo.git.log("--pretty=format:'%H\t%an\t%s'", file_path)
     else:
         author_parameter = "--author=%s" % (author_name)
-        log = repo.git.log("--pretty=format:'%H\t%an\t%s'", author_parameter, lines_limit)
+        log = repo.git.log("--pretty=format:'%H\t%an\t%s'", author_parameter, file_path)
     log_split = log.splitlines()
     history = []
     for line in log_split:
@@ -325,9 +314,7 @@ def get_commit_history_for_file(repo_link, file_path, author_name=None, start_li
         commit['sha'] = elements[0]
         if not author_name:
             commit['author'] = elements[1]
-            commit['commit_message'] = elements[2]
-        else:
-            commit['commit_message'] = elements[2]
+        commit['commit_message'] = elements[2]
         history.append(commit)
     return history
 
@@ -388,6 +375,21 @@ def compare_history_in_files(repo_link, file_path, start_line, end_line, *author
     return author_history
 
 def get_commit_history_for_file_with_lines(repo_link, file_name, start, end, author_name):
+    """
+    Return commit history for a file with lines litmit
+    
+    Args:
+        repo_link:      owner/repo format
+        file_path:      path to file in repo
+        start:          specify the starting line in the file
+                        input negative value to ignore this field
+        end:            specify the ending line in the file to inspect
+                        input negative value to ignore this field
+        author_name:    name of author
+
+    Return:
+        list of commits by that author in those lines
+    """
     _clone_repo(repo_link)
     command = 'git log --author="%s" -L %s,%s:%s | grep "commit [a-zA-Z0-9]"' % (author_name, start, end, file_name)
     try:
