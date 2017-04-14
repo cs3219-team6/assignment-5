@@ -70,15 +70,15 @@ def _get_team_contribution_data_layout(repo_link, username=None, password=None):
         #width = STANDARD_WIDTH,
         #height = STANDARD_HEIGHT,
 
-	    xaxis=dict(
-	        domain=[0, 0.3]
-	    ),
-	    xaxis2=dict(
-	        domain=[0.35, 0.65]
-	    ),
-	    xaxis3=dict(
-	        domain=[0.7, 1]
-	    ),
+        xaxis=dict(
+            domain=[0, 0.3]
+        ),
+        xaxis2=dict(
+            domain=[0.35, 0.65]
+        ),
+        xaxis3=dict(
+            domain=[0.7, 1]
+        ),
         yaxis=dict(
             domain=[0,1],
             anchor='x1',
@@ -160,3 +160,36 @@ def get_team_commit_history(repo_link, out_file, start=None, end=None, path=None
     data, layout = _get_team_commit_history_data_layout(repo_link, team)
     _make_plot(data, layout, out_file)
     return
+
+"""
+Le Minh Duc
+"""
+
+def get_team_total_lines_summary(repo_link, out_file, username=None, password=None):
+    data, layout = _get_team_total_lines_layout(repo_link, username, password)
+    _make_plot(data, layout, out_file)
+    return
+
+def _get_team_total_lines_layout(repo_link, username=None, password=None):
+    contributor_names = gitguard.get_repo_contributors(repo_link, username, password)
+    contributor_lines = []
+
+    for contributor in contributor_names:
+        c, a, d = gitguard.get_stats_by_author(repo_link, contributor, username, password)
+        l = a - d;
+        contributor_lines.append(l)
+        
+    trace_lines =  go.Bar(
+        x = contributor_names,
+        y = contributor_lines,
+        name = 'Lines of Code',
+        xaxis = 'x1',
+        yaxis = 'y1',
+    )
+
+    layout_team_contribution = go.Layout(
+        barmode = 'group',
+        title = 'Lines of Code Contribution for %s' % repo_link,
+    )
+
+    return [trace_lines], layout_team_contribution
