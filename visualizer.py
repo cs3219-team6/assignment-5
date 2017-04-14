@@ -70,15 +70,15 @@ def _get_team_contribution_data_layout(repo_link, username=None, password=None):
         #width = STANDARD_WIDTH,
         #height = STANDARD_HEIGHT,
 
-	    xaxis=dict(
-	        domain=[0, 0.3]
-	    ),
-	    xaxis2=dict(
-	        domain=[0.35, 0.65]
-	    ),
-	    xaxis3=dict(
-	        domain=[0.7, 1]
-	    ),
+        xaxis=dict(
+            domain=[0, 0.3]
+        ),
+        xaxis2=dict(
+            domain=[0.35, 0.65]
+        ),
+        xaxis3=dict(
+            domain=[0.7, 1]
+        ),
         yaxis=dict(
             domain=[0,1],
             anchor='x1',
@@ -171,37 +171,25 @@ def get_team_total_lines_summary(repo_link, out_file, username=None, password=No
     return
 
 def _get_team_total_lines_layout(repo_link, username=None, password=None):
-   	contributor_names = gitguard.get_repo_contributors(repo_link, username, password)
-    contributor_insertions = []
-    contributor_deletions = []
+    contributor_names = gitguard.get_repo_contributors(repo_link, username, password)
     contributor_lines = []
 
     for contributor in contributor_names:
         c, a, d = gitguard.get_stats_by_author(repo_link, contributor, username, password)
-        contributor_insertions.append(a)
-        contributor_deletions.append(d)
         l = a - d;
         contributor_lines.append(l)
         
-    trace_commit =  go.Bar(
+    trace_lines =  go.Bar(
         x = contributor_names,
         y = contributor_lines,
-        name = 'Commits',
+        name = 'Lines of Code',
         xaxis = 'x1',
         yaxis = 'y1',
     )
 
     layout_team_contribution = go.Layout(
         barmode = 'group',
-        title = 'Team Contribution for %s' % repo_link,
-        #width = STANDARD_WIDTH,
-        #height = STANDARD_HEIGHT,
-	    xaxis=dict(
-	        domain=[0, 0.3]
-	    ),
-	   
-        yaxis=dict(
-            domain=[0,1],
-            anchor='x1',
-        ),
+        title = 'Lines of Code Contribution for %s' % repo_link,
     )
+
+    return [trace_lines], layout_team_contribution
