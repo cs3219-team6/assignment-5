@@ -245,7 +245,8 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, path=N
     history = [] 
     for i in range(n):
         commit = {}
-        commit['sha'] = commit_history[i]["sha"]
-        commit['commit_message'] = commit_history[i]["commit"]["message"]
+        commit['sha'] = commit_history[i]['sha']
+        commit['commit_message'] = commit_history[i]['commit']['message']
+        commit['timestamp'] = commit_history[i]['commit']['committer']['date']
         history.append(commit)
     return history
