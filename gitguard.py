@@ -296,7 +296,9 @@ def get_commit_history_for_file(repo_link, file_path, author_name=None, start_li
         end_line:       (optional) specigy the ending line in the file to inspect
 
     Return:
-        list of commits in format [sha, author, title]
+        list of commits in format [sha, author, title] if author's name no given
+        OR
+        list of commits in format [sha, title] if author's name is given
     """
     repo = _clone_repo(repo_link)
     if start_line and end_line: 
@@ -318,10 +320,11 @@ def get_commit_history_for_file(repo_link, file_path, author_name=None, start_li
         elements = re.split(r'\t+', line)
         commit = {}
         commit['sha'] = elements[0]
-        commit['author'] = elements[1]
+        if not author_name:
+            commit['author'] = elements[1]
         commit['commit_message'] = elements[2]
         history.append(commit)
-        print(elements) 
+    return history 
 
 def get_stats_by_author(repo_link, author_name, username=None, password=None):
     """
@@ -347,3 +350,40 @@ def get_stats_by_author(repo_link, author_name, username=None, password=None):
         adds += week['a']
         dels += week['d']
     return total_commits, adds, dels
+
+def compare_history_in_files(repo_link, file_path, start_line, end_line, *authors):
+    """
+    Return commit history for a file. Options: by author, specify code chunk
+    
+    Args:
+        repo_link:      owner/repo format
+        file_path:      path to file in repo
+        start_line:     (optional) specify the starting line in the file
+                        input negative value to ignore this field
+        end_line:       (optional) specigy the ending line in the file to inspect
+                        input negative value to ignore this field
+        *authors:       name of authors to compare
+
+    Return:
+        list of commits in format [author_name, stats] with stats being the result
+        of calling get_commit_history_for_file(repo_link, file_path, author)
+    """
+    num_authors = len(authors)
+    author_history = []
+    for author in authors:
+        history = {}
+        history['name'] = author
+        if start_line < 0 or end_line < 0:
+            history['stats'] = get_commit_history_for_file(repo_link, file_path, author)
+        else:
+            history['stats'] = get_commit_history_for_file(repo_link, file_path, author, start_line, end_line)
+        author_history.append(history)
+    print author_history
+
+"""
+import os
+os.chdir("C:\Users\Darren Le\Documents\cs3219-assignment-5")
+execfile("gitguard.py")
+from gitguard import *
+compare_history_in_files("cs3219-team6/assignment-5", "gitguard.py", -1, -1, "darrenwee", "acuodancer")
+"""
