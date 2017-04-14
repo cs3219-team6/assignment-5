@@ -6,6 +6,7 @@ import re
 import os
 import shutil
 import stat
+import subprocess
 from git import Repo
 
 """
@@ -309,8 +310,7 @@ def get_commit_history_for_file(repo_link, file_path, author_name=None, start_li
         lines_limit = "%s" % (file_path)
     else:
         lines_limit = "-L %s,%s:%s" % (start_line, end_line, file_path)
-    """ temporaroly disallow line limiters"""
-    lines_limit = "%s" % (file_path)
+    """ temporaroly disallow line limiters lines_limit = "%s" % (file_path)"""
     if not author_name:
         log = repo.git.log("--pretty=format:'%H\t%an\t%s'", lines_limit)
     else:
@@ -381,16 +381,22 @@ def compare_history_in_files(repo_link, file_path, start_line, end_line, *author
         history = {}
         history['name'] = author
         if end_line <= 0:
-            history['stats'] = get_commit_history_for_file(repo_link, file_path, author, start_line)
+            history['stats'] = get_commit_history_for_file(repo_link, file_path, author)
         else:
-            history['stats'] = get_commit_history_for_file(repo_link, file_path, author, start_line, end_line)
+            history['stats'] = get_commit_history_for_file_with_lines(repo_link, file_path, start_line, end_line, author)
         author_history.append(history)
     return author_history
 
-"""
-import os
-os.chdir("C:\Users\Darren Le\Documents\cs3219-assignment-5")
-execfile("gitguard.py")
-from gitguard import *
-compare_history_in_files("cs3219-team6/assignment-5", "gitguard.py", 100, 200, "acuodancer", "Darren Wee")
-"""
+def get_commit_history_for_file_with_lines(repo_link, file_name, start, end, author_name):
+    _clone_repo(repo_link)
+    command = 'git log --author="%s" -L %s,%s:%s | grep "commit [a-zA-Z0-9]"' % (author_name, start, end, file_name)
+    try:
+        result = subprocess.check_output(command, shell=True)
+        lines = result.splitlines()
+        history = []
+        for line in lines:
+            if line[0] == 'c':
+                history.append(line)
+        return history
+    except subprocess.CalledProcessError as e:
+        print(e)
