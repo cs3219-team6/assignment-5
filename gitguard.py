@@ -1,6 +1,13 @@
 import re
 import github
 import datetime
+import git
+import re
+import os
+import shutil
+import stat
+import subprocess
+from git import Repo
 
 """
 gitguard_extractor.py
@@ -189,7 +196,6 @@ def get_total_insertions_deletions(repo_link, username=None, password=None):
     owner, repo = process_repo_link(repo_link)
     gh = github.GitHub(username=username, password=password) if username and password else GITHUB
     weekly_data = gh.repos(owner)(repo).stats.code_frequency.get();
-
     adds = 0
     dels = 0
     for week in weekly_data:
@@ -249,3 +255,150 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, path=N
         commit['commit_message'] = commit_history[i]["commit"]["message"]
         history.append(commit)
     return history
+
+def _add_write_access(func, path, excinfo):
+    """
+    Helper function to remove change read-only file status to editable
+    Source: http://stackoverflow.com/questions/1889597/deleting-directory-in-python
+    """
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+def _clone_repo(repo_link, destination=None):
+    """
+    Helper function to clone a repo to destination. If folder already exists, delete all version
+    
+    Args:
+        repo_link:      owner/repo format
+        destination:    local file path, set to default if not supplied
+
+    Return:
+        reference to the cloned repo
+    """
+    if not destination:
+        destination = "%s%s" % ("./gitguard/", repo_link)
+    if os.path.exists(destination):
+        shutil.rmtree(destination, onerror=_add_write_access)
+    repo_url = "%s%s%s" % ("https://github.com/", repo_link, ".git");
+    
+    repo = Repo.clone_from(repo_url , destination, branch="master")
+    return repo
+
+
+def get_commit_history_for_file(repo_link, file_path, author_name=None):
+    """
+    Return commit history for a file. Options: by author.
+    
+    Args:
+        repo_link:      owner/repo format
+        file_path:      path to file in repo
+        author_name:    (optional) limit history to one author
+
+    Return:
+        list of commits in format [sha, author, title] if author's name no given
+        OR
+        list of commits in format [sha, title] if author's name is given
+    """
+    repo = _clone_repo(repo_link)
+    if not author_name:
+        log = repo.git.log("--pretty=format:'%H\t%an\t%s'", file_path)
+    else:
+        author_parameter = "--author=%s" % (author_name)
+        log = repo.git.log("--pretty=format:'%H\t%an\t%s'", author_parameter, file_path)
+    log_split = log.splitlines()
+    history = []
+    for line in log_split:
+        line = line.strip()
+        elements = re.split(r'\t+', line)
+        commit = {}
+        commit['sha'] = elements[0]
+        if not author_name:
+            commit['author'] = elements[1]
+        commit['commit_message'] = elements[2]
+        history.append(commit)
+    return history
+
+def get_stats_by_author(repo_link, author_name, username=None, password=None):
+    """
+    Return total number of commits, lines added and lines delted by an author
+    
+    Args:
+        repo_link:      owner/repo format
+        author_name:    limit history to one author
+        username (str)          : github username
+        password (str)          : github password
+
+    Return:
+        three numbers: commits, additions, deletions
+    """
+    owner, repo = process_repo_link(repo_link)
+    gh = github.GitHub(username=username, password=password) if username and password else GITHUB
+    all_data = gh.repos(owner)(repo).stats.contributors.get(author = author_name)[0];
+    total_commits = all_data['total']
+    weekly_data = all_data['weeks']
+    adds = 0
+    dels = 0
+    for week in weekly_data:
+        adds += week['a']
+        dels += week['d']
+    return total_commits, adds, dels
+
+def compare_history_in_files(repo_link, file_path, start_line, end_line, *authors):
+    """
+    Return commit history for a file. Options: by author, specify code chunk
+    
+    Args:
+        repo_link:      owner/repo format
+        file_path:      path to file in repo
+        start_line:     (optional) specify the starting line in the file
+                        input negative value to ignore this field
+        end_line:       (optional) specigy the ending line in the file to inspect
+                        input negative value to ignore this field
+        *authors:       name of authors to compare
+
+    Return:
+        list of commits in format [author_name, stats] with stats being the result
+        of calling get_commit_history_for_file(repo_link, file_path, author)
+    """
+    num_authors = len(authors)
+    if start_line <= 0:
+        start_line = 1
+    author_history = []
+    for author in authors:
+        history = {}
+        history['name'] = author
+        if end_line <= 0:
+            history['stats'] = get_commit_history_for_file(repo_link, file_path, author)
+        else:
+            history['stats'] = get_commit_history_for_file_with_lines(repo_link, file_path, start_line, end_line, author)
+        author_history.append(history)
+    return author_history
+
+def get_commit_history_for_file_with_lines(repo_link, file_name, start, end, author_name):
+    """
+    Return commit history for a file with lines litmit
+    
+    Args:
+        repo_link:      owner/repo format
+        file_path:      path to file in repo
+        start:          specify the starting line in the file
+                        input negative value to ignore this field
+        end:            specify the ending line in the file to inspect
+                        input negative value to ignore this field
+        author_name:    name of author
+
+    Return:
+        list of commits by that author in those lines
+    """
+    _clone_repo(repo_link)
+    command = 'git log --author="%s" -L %s,%s:%s | grep "commit [a-zA-Z0-9]"' % (author_name, start, end, file_name)
+    try:
+        result = subprocess.check_output(command, shell=True)
+        lines = result.splitlines()
+        history = []
+        for line in lines:
+            if line[0] == 'c':
+                history.append(line)
+        return history
+    except subprocess.CalledProcessError as e:
+        print(e)
