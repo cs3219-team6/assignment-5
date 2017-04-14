@@ -33,18 +33,13 @@ def _get_team_contribution_data_layout(repo_link, username=None, password=None):
     contributor_commits = []
     contributor_insertions = []
     contributor_deletions = []
-    print(contributor_names)
 
     for contributor in contributor_names:
         c, a, d = gitguard.get_stats_by_author(repo_link, contributor, username, password)
-        print('%d %d %d' % (c, a, d))
         contributor_commits.append(c)
         contributor_insertions.append(a)
         contributor_deletions.append(d)
         
-    print(contributor_commits)
-    print(contributor_insertions)
-
     trace_commit =  go.Bar(
         x = contributor_names,
         y = contributor_commits,
