@@ -378,12 +378,4 @@ def compare_history_in_files(repo_link, file_path, start_line, end_line, *author
         else:
             history['stats'] = get_commit_history_for_file(repo_link, file_path, author, start_line, end_line)
         author_history.append(history)
-    print author_history
-
-"""
-import os
-os.chdir("C:\Users\Darren Le\Documents\cs3219-assignment-5")
-execfile("gitguard.py")
-from gitguard import *
-compare_history_in_files("cs3219-team6/assignment-5", "gitguard.py", -1, -1, "darrenwee", "acuodancer")
-"""
+    return author_history
