@@ -14,7 +14,7 @@ import gitguard
 STANDARD_WIDTH = 800
 STANDARD_HEIGHT = 640
 
-def make_plot(data, layout, out_file='out.png'):
+def _make_plot(data, layout, out_file='out.png'):
     """
     Generates and saves a plotly plot given some data.
 
@@ -28,16 +28,17 @@ def make_plot(data, layout, out_file='out.png'):
     py.image.save_as(fig, filename = out_file)
     return
 
-def _get_team_contribution_data_layout(repo_link):
-    contributors = gitguard._get_contributors_from_api(repo_link, gitguard.GITHUB)
-    contributor_names = []
+def _get_team_contribution_data_layout(repo_link, username=None, password=None):
+    contributor_names = gitguard.get_repo_contributors(repo_link, username, password)
     contributor_commits = []
-    #contributor_insertions = []
-    #contributor_deletions = []
+    contributor_insertions = []
+    contributor_deletions = []
 
-    for contributor in contributors:
-        contributor_names.append(contributor['login'])
-        contributor_commits.append(contributor['contributions'])
+    for contributor in contributor_names:
+        c, a, d = gitguard.get_stats_by_author(repo_link, contributor, username, password)
+        contributor_commits.append(c)
+        contributor_insertions.append(a)
+        contributor_deletions.append(d)
         
     trace_commit =  go.Bar(
         x = contributor_names,
@@ -45,18 +46,30 @@ def _get_team_contribution_data_layout(repo_link):
         name = 'Commits',
     )
 
+    trace_insertion =  go.Bar(
+        x = contributor_names,
+        y = contributor_insertions,
+        name = 'Insertions',
+    )
+
+    trace_deletion =  go.Bar(
+        x = contributor_names,
+        y = contributor_deletions,
+        name = 'Deletions',
+    )
+
     layout_team_contribution = go.Layout(
         barmode = 'group',
-        title = 'Team Contribution',
+        title = 'Team Contribution for %s' % repo_link,
         width = STANDARD_WIDTH,
         height = STANDARD_HEIGHT,
     )
 
-    return [trace_commit], layout_team_contribution
+    return [trace_commit, trace_insertion, trace_deletion], layout_team_contribution
 
-def get_team_contribution_summary(repo_link, out_file):
-    data, layout = _get_team_contribution_data_layout(repo_link)
-    make_plot(data, layout, out_file)
+def get_team_contribution_summary(repo_link, out_file, username=None, password=None):
+    data, layout = _get_team_contribution_data_layout(repo_link, username, password)
+    _make_plot(data, layout, out_file)
     return
 
 def _extract_date_from_timestamp(timestamp):
@@ -117,5 +130,5 @@ def _get_team_commit_history_data_layout(repo_link, team, start=None, end=None, 
 def get_team_commit_history(repo_link, out_file, start=None, end=None, path=None, username=None, password=None):
     team = gitguard.get_repo_contributors(repo_link)
     data, layout = _get_team_commit_history_data_layout(repo_link, team)
-    make_plot(data, layout, out_file)
+    _make_plot(data, layout, out_file)
     return
