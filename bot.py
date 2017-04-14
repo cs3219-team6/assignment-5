@@ -173,4 +173,32 @@ def team_contribution(bot, update, args):
 team_contribution_handler = CommandHandler('team_contribution', team_contribution, pass_args=True)
 dispatcher.add_handler(team_contribution_handler)
 
+def team_lines_contribution(bot, update, args):
+    # check length of argument. 3 if username and credentials is given, 1 if otherwise.
+    if len(args) != 1 and len(args) != 3:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Wrong format. Format must follow `/team_lines_contribution <repo_link> [<username> <password]`", parse_mode='Markdown')
+        return
+
+    # first argument is always the repo link
+    if not gitguard.is_repo_link_valid(args[0]):
+        bot.sendMessage(chat_id=update.message.chat_id, text="Wrong or invalid github repo. Repo format must follow `<username>/<repo_name>`", parse_mode='Markdown')
+        return
+
+    # check validity of credentials
+    if len(args) == 3 and not gitguard.is_user_valid(args[1], args[2]):
+        bot.sendMessage(chat_id=update.message.chat_id, text="Wrong github credentials.")
+        return
+
+    viz_file = 'tmp.png'
+    if len(args) == 1:
+        visualizer.get_team_total_lines_summary(args[0], viz_file)
+    else:
+        visualizer.get_team_total_lines_summary(args[0], viz_file, username=args[1], password=args[2])
+
+    #TODO(tjonganthony): change the message returned
+    bot.sendPhoto(chat_id=update.message.chat_id, photo=open(viz_file, 'rb'))
+
+team_lines_contribution_handler = CommandHandler('team_lines_contribution', team_lines_contribution, pass_args=True)
+dispatcher.add_handler(team_lines_contribution_handler)
+
 updater.start_polling()
