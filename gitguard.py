@@ -81,6 +81,14 @@ def get_name_from_username(username):
     except github.ApiNotFoundError:
         return None
 
+def get_repo_contributors(repo_link, username=None, password=None):
+    gh = github.GitHub(username=username, password=password) if username and password else GITHUB
+    contributors = _get_contributors_from_api(repo_link, gh)
+    contributor_list = []
+    for contributor in contributors:
+        contributor_list.append(contributor['login'])
+    return contributor_list
+    
 def process_repo_link(repo_link):
     #returns owner, repo_name
     return REPO_LINK_REGEX.split(repo_link)
@@ -251,8 +259,9 @@ def get_commit_history(repo_link, author_name=None, start=None, end=None, path=N
     history = [] 
     for i in range(n):
         commit = {}
-        commit['sha'] = commit_history[i]["sha"]
-        commit['commit_message'] = commit_history[i]["commit"]["message"]
+        commit['sha'] = commit_history[i]['sha']
+        commit['commit_message'] = commit_history[i]['commit']['message']
+        commit['timestamp'] = commit_history[i]['commit']['committer']['date']
         history.append(commit)
     return history
 
