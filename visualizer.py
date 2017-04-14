@@ -33,36 +33,69 @@ def _get_team_contribution_data_layout(repo_link, username=None, password=None):
     contributor_commits = []
     contributor_insertions = []
     contributor_deletions = []
+    print(contributor_names)
 
     for contributor in contributor_names:
         c, a, d = gitguard.get_stats_by_author(repo_link, contributor, username, password)
+        print('%d %d %d' % (c, a, d))
         contributor_commits.append(c)
         contributor_insertions.append(a)
         contributor_deletions.append(d)
         
+    print(contributor_commits)
+    print(contributor_insertions)
+
     trace_commit =  go.Bar(
         x = contributor_names,
         y = contributor_commits,
         name = 'Commits',
+        xaxis = 'x1',
+        yaxis = 'y1',
     )
 
     trace_insertion =  go.Bar(
         x = contributor_names,
         y = contributor_insertions,
         name = 'Insertions',
+        xaxis = 'x2',
+        yaxis = 'y2',
     )
 
     trace_deletion =  go.Bar(
         x = contributor_names,
         y = contributor_deletions,
         name = 'Deletions',
+        xaxis = 'x3',
+        yaxis = 'y3',
     )
 
     layout_team_contribution = go.Layout(
         barmode = 'group',
         title = 'Team Contribution for %s' % repo_link,
-        width = STANDARD_WIDTH,
-        height = STANDARD_HEIGHT,
+        #width = STANDARD_WIDTH,
+        #height = STANDARD_HEIGHT,
+
+	    xaxis=dict(
+	        domain=[0, 0.3]
+	    ),
+	    xaxis2=dict(
+	        domain=[0.35, 0.65]
+	    ),
+	    xaxis3=dict(
+	        domain=[0.7, 1]
+	    ),
+        yaxis=dict(
+            domain=[0,1],
+            anchor='x1',
+        ),
+        yaxis2=dict(
+            domain=[0,1],
+            anchor='x2',
+        ),
+        yaxis3=dict(
+            domain=[0,1],
+            anchor='x3',
+        ),
     )
 
     return [trace_commit, trace_insertion, trace_deletion], layout_team_contribution
