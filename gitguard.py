@@ -332,8 +332,8 @@ def get_stats_by_author(repo_link, author_name, username=None, password=None):
     Return total number of commits, lines added and lines delted by an author
     
     Args:
-        repo_link:      owner/repo format
-        author_name:    limit history to one author
+        repo_link               : owner/repo format
+        author_name             : limit history to one author
         username (str)          : github username
         password (str)          : github password
 
@@ -342,15 +342,17 @@ def get_stats_by_author(repo_link, author_name, username=None, password=None):
     """
     owner, repo = process_repo_link(repo_link)
     gh = github.GitHub(username=username, password=password) if username and password else GITHUB
-    all_data = gh.repos(owner)(repo).stats.contributors.get(author = author_name)[0];
-    total_commits = all_data['total']
-    weekly_data = all_data['weeks']
-    adds = 0
-    dels = 0
-    for week in weekly_data:
-        adds += week['a']
-        dels += week['d']
-    return total_commits, adds, dels
+    repo_data = gh.repos(owner)(repo).stats.contributors.get();
+    for all_data in repo_data:
+        if all_data['author']['login'] == author_name:
+            total_commits = all_data['total']
+            weekly_data = all_data['weeks']
+            adds = 0
+            dels = 0
+            for week in weekly_data:
+                adds += week['a']
+                dels += week['d']
+            return total_commits, adds, dels
 
 def compare_history_in_files(repo_link, file_path, start_line, end_line, *authors):
     """
