@@ -40,7 +40,7 @@ def top_three(bot, update, args):
         return
 
     # first argument is always the repo link
-    if not gitguard.is_repo_link_valid(args[0]):
+    if len(args) == 1 and not gitguard.is_repo_link_valid(args[0]):
         bot.sendMessage(chat_id=update.message.chat_id, text="Wrong or invalid github repo. Repo format must follow `<username>/<repo_name>`", parse_mode='Markdown')
         return
 
@@ -48,6 +48,10 @@ def top_three(bot, update, args):
     if len(args) == 3 and not gitguard.is_user_valid(args[1], args[2]):
         bot.sendMessage(chat_id=update.message.chat_id, text="Wrong github credentials.")
         return
+
+        if not gitguard.is_repo_link_valid(args[0], args[1], args[2]):
+            bot.sendMessage(chat_id=update.message.chat_id, text="Wrong or invalid github repo. Repo format must follow `<username>/<repo_name>`", parse_mode='Markdown')
+            return
 
     if len(args) == 1:
         res = gitguard.get_top_n_contributors(args[0], 3)
@@ -68,7 +72,7 @@ def top_contributor(bot, update, args):
         return
 
     # first argument is always the repo link
-    if not gitguard.is_repo_link_valid(args[0]):
+    if len(args) == 1 and not gitguard.is_repo_link_valid(args[0]):
         bot.sendMessage(chat_id=update.message.chat_id, text="Wrong or invalid github repo. Repo format must follow `<username>/<repo_name>`", parse_mode='Markdown')
         return
 
@@ -76,6 +80,10 @@ def top_contributor(bot, update, args):
     if len(args) == 3 and not gitguard.is_user_valid(args[1], args[2]):
         bot.sendMessage(chat_id=update.message.chat_id, text="Wrong github credentials.")
         return
+
+        if not gitguard.is_repo_link_valid(args[0], args[1], args[2]):
+            bot.sendMessage(chat_id=update.message.chat_id, text="Wrong or invalid github repo. Repo format must follow `<username>/<repo_name>`", parse_mode='Markdown')
+            return
 
     if len(args) == 1:
         res = gitguard.get_top_contributor_in_past_week(args[0])
@@ -96,7 +104,7 @@ def last_commit(bot, update, args):
         return
 
     # first argument is always the repo link
-    if not gitguard.is_repo_link_valid(args[0]):
+    if len(args) == 1 and not gitguard.is_repo_link_valid(args[0]):
         bot.sendMessage(chat_id=update.message.chat_id, text="Wrong or invalid github repo. Repo format must follow `<username>/<repo_name>`", parse_mode='Markdown')
         return
 
@@ -104,6 +112,10 @@ def last_commit(bot, update, args):
     if len(args) == 3 and not gitguard.is_user_valid(args[1], args[2]):
         bot.sendMessage(chat_id=update.message.chat_id, text="Wrong github credentials.")
         return
+
+        if not gitguard.is_repo_link_valid(args[0], args[1], args[2]):
+            bot.sendMessage(chat_id=update.message.chat_id, text="Wrong or invalid github repo. Repo format must follow `<username>/<repo_name>`", parse_mode='Markdown')
+            return
 
     if len(args) == 1:
         res = gitguard.get_latest_commit_summary(args[0])

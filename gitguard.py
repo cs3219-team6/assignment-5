@@ -13,7 +13,7 @@ REGEX_REPO_LINK_DELIMITER = '\s*/\s*'
 REPO_LINK_REGEX = re.compile(REGEX_REPO_LINK_DELIMITER)
 GITHUB = github.GitHub()
 
-def is_repo_link_valid(repo_link):
+def is_repo_link_valid(repo_link, username=None, password=None):
     """
     Repository link validator.
 
@@ -31,7 +31,8 @@ def is_repo_link_valid(repo_link):
         return False
 
     try:
-        GITHUB.repos(owner)(repo).get()
+        gh = github.GitHub(username=username, password=password) if username and password else GITHUB
+        gh.repos(owner)(repo).get()
         return True
     except github.ApiNotFoundError:
         return False
@@ -149,7 +150,7 @@ def get_latest_commit_summary(repo_link, username=None, password=None):
 def _get_contributor_stats(repo_link, gh):
     owner, repo = process_repo_link(repo_link)
     return gh.repos(owner)(repo).stats.contributors.get()
-    
+
 def get_top_contributor_in_past_week(repo_link, username=None, password=None):
     """
     Return top contributor of within the last week
