@@ -184,7 +184,7 @@ def get_top_contributor_in_past_week(repo_link, username=None, password=None):
                 }
     """
     gh = github.GitHub(username=username, password=password) if username and password else GITHUB
-    top = _get_contributor_stats(repo_link, gh)[0]
+    top = _get_contributor_stats(repo_link, gh)[-1]
 
     return {'username': top['author']['login'], 'name': get_name_from_username(top['author']['login']), 'commits': top['weeks'][0]['c'], 'additions': top['weeks'][0]['a'], 'deletions': top['weeks'][0]['d']}
 
@@ -413,3 +413,4 @@ def get_commit_history_for_file_with_lines(repo_link, file_name, start, end, aut
         return history
     except subprocess.CalledProcessError as e:
         print(e)
+    return
