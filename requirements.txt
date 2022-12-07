@@ -1,5 +1,5 @@
 appdirs==1.4.3
-certifi==2017.1.23
+certifi==2022.12.7
 decorator==4.0.11
 enum34==1.1.6
 functools32==3.2.3.post2
